@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fullscreen Test Page</title>
+
+    <style>
+      body {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1rem;
+        font-family: -apple-system;
+      }
+      figure {
+        position: relative;
+        aspect-ratio: 1;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      figure figcaption {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        text-align: center;
+        padding: 0.5em;
+      }
+      figure img,
+      figure video {
+        width: 100%;
+      }
+
+      .stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+      .stage * {
+        pointer-events: none;
+      }
+
+      .smiley-circle {
+        position: absolute;
+        width: 65%;
+        height: 65%;
+        background-color: yellow;
+        border: 10px solid black;
+        border-radius: 255px;
+        top: calc(17.5% - 5px);
+        left: calc(17.5% - 5px);
+      }
+
+      .eye {
+        position: absolute;
+        width: 10%;
+        height: 10%;
+        background-color: black;
+        border-radius: 25px;
+        top: calc(28% - 5px);
+        left: calc(24% - 5px);
+      }
+      .right-eye {
+        left: calc(76% - 10px);
+      }
+
+      .mouth {
+        width: 72%;
+        height: 38%;
+        border-bottom-left-radius: 250px;
+        border-bottom-right-radius: 250px;
+        background-color: black;
+        position: absolute;
+        top: 50%;
+        left: calc(22% - 10px);
+      }
+
+      img::backdrop {
+        background: rebeccapurple;
+      }
+
+      figure > *:first-child {
+        cursor: pointer;
+      }
+
+      #controls {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 1);
+        color: white;
+        padding: 1em;
+        border-radius: 16px 0 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5em;
+      }
+
+      #dnd-box {
+        background: rgba(0, 0, 0, 0.1);
+        border: 3px dashed rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <figure id="dnd-box">
+      <span id="dnd-content"></span>
+      <figcaption>Drag and Drop Media</figcaption>
+    </figure>
+
+    <div id="controls">
+      <input id="auto-exit" name="auto-exit" type="checkbox" switch="" />
+      <label for="auto-exit">Exit fullscreen after 5 seconds</label>
+    </div>
+
+    <script>
+      document.body.addEventListener("click", (e) => {
+        console.log(e);
+        if (
+          e.target.tagName === "IMG" ||
+          e.target.tagName === "VIDEO" ||
+          e.target.classList.contains("stage")
+        ) {
+          goFullscreen(e.target);
+          return;
+        }
+      });
+
+      let autoExit = document.getElementById("auto-exit");
+      let autoExitTimeout = null;
+      async function goFullscreen(element) {
+        if (autoExitTimeout) clearTimeout(autoExitTimeout);
+
+        try {
+          var fullscreenResult = await element.webkitRequestFullscreen();
+          console.log("got a result with ", fullscreenResult);
+          if (autoExit.checked) {
+            autoExitTimeout = setTimeout(() => {
+              document.exitFullscreen();
+            }, 5000);
+          }
+        } catch (err) {
+          console.error("got error with ", err);
+        }
+      }
+
+      /*
+       * Drag and Drop Box Management
+       * It is assumed that only one `dnd-box` would exist on the page.
+       */
+
+      const dropArea = document.getElementById("dnd-box");
+      dropArea.addEventListener("drop", handleFileDrop, false);
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        dropArea.addEventListener(
+          eventName,
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          },
+          false
+        );
+      });
+
+      function handleFileDrop(e) {
+        const files = e.dataTransfer.files;
+        console.log("Attempt to drop files: ", files);
+
+        let selectedFile, mediaElement;
+        for (selectedFile of files) {
+          if (selectedFile.type.match(/image\/.*/)) {
+            mediaElement = document.createElement("img");
+            mediaElement.alt = "Drag and dropped image";
+          } else if (selectedFile.type.match(/video\/.*/)) {
+            mediaElement = document.createElement("video");
+            mediaElement.setAttribute("controls", "");
+            mediaElement.setAttribute("muted", "");
+            mediaElement.alt = "Drag and dropped video";
+          }
+
+          if (mediaElement) break;
+        }
+
+        console.log("Selected file to populate box:", selectedFile);
+
+        if (mediaElement) {
+          const fileReader = new FileReader();
+          fileReader.onload = () => {
+            mediaElement.src = fileReader.result;
+          };
+          fileReader.readAsDataURL(selectedFile);
+        }
+
+        document
+          .getElementById("dnd-content")
+          .replaceChildren(mediaElement || "Unsupported Media");
+      }
+    </script>
+  </body>
+</html>
