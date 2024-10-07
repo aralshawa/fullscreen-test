@@ -113,12 +113,16 @@
       <figcaption>Drag and Drop Media</figcaption>
     </figure>
 
-    <div id="controls">
-      <input id="auto-exit" name="auto-exit" type="checkbox" switch="" />
-      <label for="auto-exit">Exit fullscreen after 5 seconds</label>
-    </div>
+    <div id="controls" style="display: block;">
+      <input id="auto-exit" name="auto-exit" type="checkbox" switch />
+      <label for="auto-exit">Exit fullscreen after 15 seconds</label>
+      <br>
+      <input id="element-fullscreen-mode" name="element-fullscreen-mode" type="checkbox" switch />
+      <label for="element-fullscreen-mode">Fullscreen parent element</label>
+  </div>
 
     <script>
+      let elementFullscreenMode = document.getElementById("element-fullscreen-mode");
       document.body.addEventListener("click", (e) => {
         console.log(e);
         if (
@@ -126,7 +130,7 @@
           e.target.tagName === "VIDEO" ||
           e.target.classList.contains("stage")
         ) {
-          goFullscreen(e.target);
+          goFullscreen(elementFullscreenMode.checked ? e.target.parentElement : e.target);
           return;
         }
       });
