@@ -193,11 +193,8 @@
         console.log("Selected file to populate box:", selectedFile);
 
         if (mediaElement) {
-          const fileReader = new FileReader();
-          fileReader.onload = () => {
-            mediaElement.src = fileReader.result;
-          };
-          fileReader.readAsDataURL(selectedFile);
+          mediaElement.srcObject = selectedFile;
+          mediaElement.load();
         }
 
         document
