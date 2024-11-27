@@ -175,16 +175,18 @@
         const files = e.dataTransfer.files;
         console.log("Attempt to drop files: ", files);
 
-        let selectedFile, mediaElement;
+        let selectedFile, mediaElement, supportsMediaElementInterface;
         for (selectedFile of files) {
           if (selectedFile.type.match(/image\/.*/)) {
             mediaElement = document.createElement("img");
             mediaElement.alt = "Drag and dropped image";
+            supportsMediaElementInterface = false;
           } else if (selectedFile.type.match(/video\/.*/)) {
             mediaElement = document.createElement("video");
             mediaElement.setAttribute("controls", "");
             mediaElement.setAttribute("muted", "");
             mediaElement.alt = "Drag and dropped video";
+            supportsMediaElementInterface = true;
           }
 
           if (mediaElement) break;
@@ -193,8 +195,18 @@
         console.log("Selected file to populate box:", selectedFile);
 
         if (mediaElement) {
-          mediaElement.srcObject = selectedFile;
-          mediaElement.load();
+          if (supportsMediaElementInterface) {
+            // For video media elements, a pointer to the media source can be offered.
+            mediaElement.srcObject = selectedFile;
+            mediaElement.load();
+          } else {
+            // For img media elements, the file would need to be explicitly loaded.
+            const fileReader = new FileReader();
+            fileReader.onload = () => {
+              mediaElement.src = fileReader.result;
+            };
+            fileReader.readAsDataURL(selectedFile);
+          }
         }
 
         document
